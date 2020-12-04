@@ -17,7 +17,7 @@ public class View {
         attributeMap = new HashMap<String, Object>();
     }
 
-    public View addModel(String key, Object value) {
+    public View addAttribute(String key, Object value) {
         attributeMap.put(key, value);
         return this;
     }
@@ -26,7 +26,7 @@ public class View {
         return path;
     }
 
-    public Map<String, Object> getModel() {
+    public Map<String, Object> getAttribute() {
         return attributeMap;
     }
 }
