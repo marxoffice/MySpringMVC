@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import annotation.RequestMapping;
 import annotation.Controller;
+import annotation.RequestParam;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import utils.ClassTool;
@@ -75,11 +77,12 @@ public class DispatcherServlet extends HttpServlet {
 		request.setCharacterEncoding("UTF-8");
 		response.setCharacterEncoding("UTF-8");
 		response.setContentType("application/json;charset=utf-8");
-		System.out.println(request.getParameter("name"));
+//		System.out.println(request.getParameter("name"));
 		String uri=request.getRequestURI();
+		System.out.println("访问的uri"+uri);
 		// 判断uri是否macher
 //		UrlMatcher.matchUrl()
-		Map<String, String> attr = null;
+		List<String> attr = null;
 		Method m = null;
 		for(Map.Entry<String, Method> entry : methodsMap.entrySet()){
 			String mapUri = entry.getKey();
@@ -94,6 +97,7 @@ public class DispatcherServlet extends HttpServlet {
 				m = mapMethod;
 				System.out.println("匹配成功");
 				System.out.println("mapUri:"+mapUri);
+				System.out.println(attr.size());
 				break;
 			}
 
@@ -103,7 +107,7 @@ public class DispatcherServlet extends HttpServlet {
 		InputStream fileSourceStream;
 		if(m!=null){
 			Parameter[] parameters=m.getParameters();  // 方法参数
-			System.out.println("parameters[0]："+parameters[0]);
+//			System.out.println("parameters[0]："+parameters[0].getName());
 			System.out.println("方法参数长度："+parameters.length);
 			Object[] args=new Object[parameters.length];
 			// 判断是否为文件
@@ -117,32 +121,36 @@ public class DispatcherServlet extends HttpServlet {
 			else{
 				System.out.println("普通request");
 				int i = 0;
-				if(attr != null) {
+				if(!attr.isEmpty()) {
 					System.out.println("rest开始");
-					for (Map.Entry<String, String> entry : attr.entrySet()) {
-						String args_name = entry.getKey();
-						String args_value = entry.getValue();
-						System.out.println("rest args_name="+args_name+"; args_value = "+args_value);
-						args[i] = args_value; // rest参数类型直接为String
+					for (String para : attr) {
+						System.out.println("rest args_value = "+para);
+						args[i] = para; // rest参数类型直接为String
 						i += 1;
 					}
-//					args[0] = attr; // 参数0位置直接放rest的map
 				}
 				System.out.println("request参数添加");
 				System.out.println("i="+i);
+//				args[i] = request.getParameterMap(); // 这个方法会返回一个 Map<String, String[]> 可以获得所有的parameter
 				for(;i<parameters.length;i++) // 添加剩余的request中参数
 				{
 					Parameter p=parameters[i];
-					System.out.println(p.getName());
-					String value=request.getParameter(p.getName());
-					args[i]=convert(value,p.getType());
-					System.out.println("request参数"+args[i]);
+					RequestParam paramAnno = p.getAnnotation(RequestParam.class);
+					if(paramAnno != null){
+						System.out.println("用户自定义普通url参数"+paramAnno.value());
+						String value = request.getParameter(paramAnno.value());
+						args[i]=convert(value,p.getType());
+						System.out.println("request参数"+args[i]);
+					} else if(i == parameters.length-1){
+						System.out.println("用户需要获得所有的url参数，包括多参数状态的");
+						args[i] = request.getParameterMap();
+					}
 				}
 			}
 
 			Object obj=beansMap.get(m);
 			try {
-				System.out.println("args[]"+args[0]);
+				System.out.println("invoke method "+m.getName()+" in obj: "+obj+" in class: "+obj.getClass());
 				Object ret=m.invoke(obj, args);
 				//TODO view model
 				response.getWriter().write(JSON.toJSONString(ret));
