@@ -4,22 +4,32 @@ import annotation.Autowired;
 import annotation.Controller;
 import annotation.RequestMapping;
 import serviceImpl.FileUploadServiceImpl;
+import view.View;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 
-@Controller
+@Controller(value = "/fileUpload")
 public class FileUploadController {
     @Autowired
     FileUploadServiceImpl uploadService;
 
     @RequestMapping("/fileUpload")
-    public String fileUpload(String filePath){
+    public View fileUpload(InputStream fileSourceStream){
         try {
-            uploadService.uploadFile(new FileInputStream(filePath));
-            return "upload success";
+            uploadService.uploadFile(fileSourceStream);
+            View view = new View("index.jsp");
+            view.addAttribute("status", "upload success");
+            return view;
         } catch (Exception e) {
-            e.getStackTrace();
-            return "upload failed";
+            View view = new View("index.jsp");
+            view.addAttribute("status", "upload failed");
+            return view;
         }
+    }
+
+    @RequestMapping("/index")
+    public View index() {
+        return new View("/web/WEB-INF/index.jsp");
     }
 }
