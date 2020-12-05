@@ -1,4 +1,4 @@
-package MySpringProject.Service;
+package service;
 
 import java.io.File;
 import java.io.FileOutputStream;
