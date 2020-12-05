@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSON;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import utils.ClassTool;
 import utils.UrlMatcher;
+import view.View;
 
 /**
  * Servlet implementation class DispatcherServlet
@@ -152,19 +153,29 @@ public class DispatcherServlet extends HttpServlet {
 			try {
 				System.out.println("invoke method "+m.getName()+" in obj: "+obj+" in class: "+obj.getClass());
 				Object ret=m.invoke(obj, args);
-				//TODO view model
-				response.getWriter().write(JSON.toJSONString(ret));
+				if(ret instanceof View){
+					// TODO ViewModel bug fix
+					View viewCurr = (View) ret;
+					if (viewCurr.getPath() != null) {
+						String path = viewCurr.getPath();
+						if (path.startsWith("/")) { // 重定向操作
+							response.sendRedirect(path);
+						} else { // 渲染jsp 界面
+							Map<String, Object> model = viewCurr.getAttribute();
+							for (Map.Entry<String, Object> entry : model.entrySet()) {
+								request.setAttribute(entry.getKey(), entry.getValue());
+							}
+							System.out.println("渲染jsp页面 " + path);
+							request.getRequestDispatcher(path).forward(request, response);
+						}
+					}
+				} else { // 用户直接返回了一些数据 这里转成JSON 返回即可
+					response.getWriter().write(JSON.toJSONString(ret));
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-
-
-
-
-
-
-
 	}
 
 	private Object convert(String value, Class<?> type) {
