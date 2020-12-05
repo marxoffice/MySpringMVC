@@ -1,6 +1,6 @@
 package servlet;
 
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
@@ -16,7 +16,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import annotation.RequestMapping;
 import annotation.Controller;
+import com.alibaba.fastjson.JSON;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import utils.ClassTool;
+import utils.UrlMatcher;
 
 /**
  * Servlet implementation class DispatcherServlet
@@ -34,8 +37,9 @@ public class DispatcherServlet extends HttpServlet {
 
 
 	public void init(ServletConfig config) throws ServletException {
+		System.out.println("这里开始init");
 		Set<Class<?>> clzSet=ClassTool.getClasses("controller");
-		for(Class<?> c:clzSet)
+		for(Class<?> c:clzSet) // 遍历所有的controller class
 		{
 			Controller rc=c.getAnnotation(Controller.class);
 			if(rc!=null)
@@ -49,8 +53,9 @@ public class DispatcherServlet extends HttpServlet {
 						if(rm!=null)
 						{
 							//TODO restful url regex mapping
+							String object_uri = rc.value();
 							String uri=rm.value();
-							methodsMap.put(config.getServletContext().getContextPath()+uri, m);
+							methodsMap.put(object_uri+uri, m); // 类uri + method uri
 							beansMap.put(m, o);
 						}
 					}
@@ -66,27 +71,90 @@ public class DispatcherServlet extends HttpServlet {
 	 *      response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		System.out.println("这里开始doget");
 		request.setCharacterEncoding("UTF-8");
 		response.setCharacterEncoding("UTF-8");
 		response.setContentType("application/json;charset=utf-8");
+		System.out.println(request.getParameter("name"));
 		String uri=request.getRequestURI();
-		Method m=methodsMap.get(uri);
-		Parameter[] parameters=m.getParameters();
-		Object[] args=new Object[parameters.length];
-		for(int i=0;i<parameters.length;i++)
-		{
-			Parameter p=parameters[i];
-			String value=request.getParameter(p.getName());
-			args[i]=convert(value,p.getType());
+		// 判断uri是否macher
+//		UrlMatcher.matchUrl()
+		Map<String, String> attr = null;
+		Method m = null;
+		for(Map.Entry<String, Method> entry : methodsMap.entrySet()){
+			String mapUri = entry.getKey();
+			Method mapMethod = entry.getValue();
+			attr = UrlMatcher.matchUrl(uri,mapUri);
+			if(attr == null){ // 未匹配成功
+				System.out.println("未匹配成功");
+				System.out.println("mapUri:"+mapUri);
+				continue;
+			}
+			else{ // 匹配成功(包含有rest参数和无rest参数的empty)
+				m = mapMethod;
+				System.out.println("匹配成功");
+				System.out.println("mapUri:"+mapUri);
+				break;
+			}
+
 		}
-		Object obj=beansMap.get(m);
-		try {
-			Object ret=m.invoke(obj, args);
-			//TODO view model
-//			response.getWriter().write(JSON.toJSONString(ret));
-		} catch (Exception e) {
-			e.printStackTrace();
+//		Method m=methodsMap.get(uri); // 获得方法
+
+		InputStream fileSourceStream;
+		if(m!=null){
+			Parameter[] parameters=m.getParameters();  // 方法参数
+			System.out.println("parameters[0]："+parameters[0]);
+			System.out.println("方法参数长度："+parameters.length);
+			Object[] args=new Object[parameters.length];
+			// 判断是否为文件
+			if(ServletFileUpload.isMultipartContent(request)){
+				System.out.println("文件流");
+
+				Parameter p=parameters[0];
+				fileSourceStream = request.getInputStream();
+				args[0] = fileSourceStream;
+			}
+			else{
+				System.out.println("普通request");
+				int i = 0;
+				if(attr != null) {
+					System.out.println("rest开始");
+					for (Map.Entry<String, String> entry : attr.entrySet()) {
+						String args_name = entry.getKey();
+						String args_value = entry.getValue();
+						System.out.println("rest args_name="+args_name+"; args_value = "+args_value);
+						args[i] = args_value; // rest参数类型直接为String
+						i += 1;
+					}
+//					args[0] = attr; // 参数0位置直接放rest的map
+				}
+				System.out.println("request参数添加");
+				System.out.println("i="+i);
+				for(;i<parameters.length;i++) // 添加剩余的request中参数
+				{
+					Parameter p=parameters[i];
+					System.out.println(p.getName());
+					String value=request.getParameter(p.getName());
+					args[i]=convert(value,p.getType());
+					System.out.println("request参数"+args[i]);
+				}
+			}
+
+			Object obj=beansMap.get(m);
+			try {
+				System.out.println("args[]"+args[0]);
+				Object ret=m.invoke(obj, args);
+				//TODO view model
+				response.getWriter().write(JSON.toJSONString(ret));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
+
+
+
+
+
 
 
 	}
