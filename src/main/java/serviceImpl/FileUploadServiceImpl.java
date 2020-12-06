@@ -2,20 +2,17 @@ package serviceImpl;
 
 import service.FileUploadService;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 
-public class FileUploadServiceImpl implements FileUploadService {
+public class FileUploadServiceImpl {
     public FileUploadServiceImpl(){
         System.out.println("in FileUploadService");
     }
     /**
      * 文件上传
      */
-    @Override
-    public void uploadFile(InputStream fileSourceStream) {
+//    @Override
+    public static boolean uploadFile(InputStream fileSourceStream) {
         try {
 //            request.setCharacterEncoding("utf-8");
 //            response.setCharacterEncoding("utf-8");
@@ -24,13 +21,19 @@ public class FileUploadServiceImpl implements FileUploadService {
 //            // 从request中获取文本输入流信息
 //            InputStream fileSourceStream = request.getInputStream();
 
-            String tempFilePath = "D:/tempFile";
+            String tempFilePath = "/src/main/files/tempFile";
 
             // 设置临时文件，保存待上传的文本输入流
             File tempFile = new File(tempFilePath);
 
-            // outputStram文件输出流指向这个tempFile
-            FileOutputStream outputStream = new FileOutputStream(tempFile);
+            // outputStream文件输出流指向这个tempFile
+            FileOutputStream outputStream = null;
+            try {
+                outputStream = new FileOutputStream(tempFile);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
 
             // 读取文件流
             byte [] buffer = new byte[1024];
@@ -74,7 +77,7 @@ public class FileUploadServiceImpl implements FileUploadService {
             }
 
             // 设置保存上传文件的路径
-            String realPath = "D:/MySpringMVC_temp";
+            String realPath = "/src/main/files";
             File fileupload = new File(realPath);
             if (!fileupload.exists()) {
                 fileupload.mkdir();
@@ -94,6 +97,8 @@ public class FileUploadServiceImpl implements FileUploadService {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
+        return true;
     }
 }
