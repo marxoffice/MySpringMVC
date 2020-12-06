@@ -9,7 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -67,6 +69,23 @@ public class DispatcherServlet extends HttpServlet {
 				}
 			}
 		}
+
+		ServletContext servletContext = config.getServletContext();
+
+		// 处理用户的静态资源
+		registerStatic(servletContext);
+	}
+
+	private void registerStatic(ServletContext servletContext) {
+
+		//注册jsp文件
+		ServletRegistration jspServlet = servletContext.getServletRegistration("jsp");
+		jspServlet.addMapping("/WEB-INF/*");
+
+		//动态注册处理静态资源的默认Servlet
+		ServletRegistration defaultServlet = servletContext.getServletRegistration("default");
+		defaultServlet.addMapping("/favicon.ico"); //网站头像
+		// defaultServlet.addMapping("/" + "*");
 	}
 
 	/**
@@ -158,15 +177,16 @@ public class DispatcherServlet extends HttpServlet {
 					View viewCurr = (View) ret;
 					if (viewCurr.getPath() != null) {
 						String path = viewCurr.getPath();
-						if (path.startsWith("/")) { // 重定向操作
-							response.sendRedirect(path);
-						} else { // 渲染jsp 界面
+						if (path.endsWith(".jsp")) { // 渲染jsp文件
 							Map<String, Object> model = viewCurr.getAttribute();
 							for (Map.Entry<String, Object> entry : model.entrySet()) {
 								request.setAttribute(entry.getKey(), entry.getValue());
 							}
 							System.out.println("渲染jsp页面 " + path);
 							request.getRequestDispatcher(path).forward(request, response);
+						} else { // 重定向操作
+							System.out.println("触发了重定向操作 "+path);
+							response.sendRedirect(path);
 						}
 					}
 				} else { // 用户直接返回了一些数据 这里转成JSON 返回即可

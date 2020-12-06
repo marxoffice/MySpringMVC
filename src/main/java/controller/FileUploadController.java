@@ -3,10 +3,10 @@ package controller;
 import annotation.Autowired;
 import annotation.Controller;
 import annotation.RequestMapping;
+import annotation.RequestParam;
 import serviceImpl.FileUploadServiceImpl;
 import view.View;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 
 @Controller(value = "/fileUpload")
@@ -30,6 +30,6 @@ public class FileUploadController {
 
     @RequestMapping("/index")
     public View index() {
-        return new View("/web/WEB-INF/index.jsp");
+        return new View("/WEB-INF/index.jsp");
     }
 }
