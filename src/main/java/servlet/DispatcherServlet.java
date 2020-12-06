@@ -1,6 +1,7 @@
 package servlet;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
@@ -17,13 +18,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import annotation.Autowired;
 import annotation.RequestMapping;
 import annotation.Controller;
 import annotation.RequestParam;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import utils.BeanHelper;
 import utils.ClassTool;
+import utils.Reflection;
 import utils.UrlMatcher;
 import view.View;
 
@@ -33,8 +35,9 @@ import view.View;
 @WebServlet("/*")
 public class DispatcherServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	private Map<Method,Object> beansMap=new HashMap<>();
-	private Map<String,Method> methodsMap=new HashMap<>();
+	private Map<Class<?>, Object> beanMap=new HashMap<>();
+	private Map<Method,Object> beanMethodMap =new HashMap<>();
+	private Map<String,Method> urlMethodMap=new HashMap<>();
 
 
 	public DispatcherServlet() {
@@ -43,35 +46,49 @@ public class DispatcherServlet extends HttpServlet {
 
 
 	public void init(ServletConfig config) throws ServletException {
+		// 这里的init是一个示范 它处理了controller 以及其requestmap autowired
+		// 如果需要使用复杂的component 和 componentScan
+		// 等其它注解 请查看test下appcontext的模板
 		System.out.println("这里开始init");
 		Set<Class<?>> clzSet=ClassTool.getClasses("controller");
 		for(Class<?> c:clzSet) // 遍历所有的controller class
 		{
-//			BeanHelper.loadBeans(c, beansMap);
-//			BeanHelper.scanComponents(c, beansMap);
+			Object o = Reflection.newInstance(c);
+
+			Field[] fields = c.getDeclaredFields();
+			for (Field f : fields) {
+				Class<?> fieldClass = f.getType();
+				if (f.isAnnotationPresent(Autowired.class)) {
+					Object field = Reflection.newInstance(fieldClass);
+					Reflection.setField(o, f, field);
+					beanMap.put(fieldClass, field);
+				}
+
+			}
+
 			Controller rc=c.getAnnotation(Controller.class);
 			if(rc!=null)
 			{
 				try {
-					Object o=c.newInstance();
 					Method[] methods=c.getDeclaredMethods();
 					for(Method m:methods)
 					{
 						RequestMapping rm=m.getAnnotation(RequestMapping.class);
 						if(rm!=null)
 						{
-							//TODO restful url regex mapping
 							String object_uri = rc.value();
 							String uri=rm.value();
-							methodsMap.put(object_uri+uri, m); // 类uri + method uri
-							beansMap.put(m, o);
+							urlMethodMap.put(object_uri+uri, m); // 类uri + method uri
+							beanMethodMap.put(m, o);
 						}
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
+			beanMap.put(c, o);
 		}
+
 
 		ServletContext servletContext = config.getServletContext();
 
@@ -107,7 +124,7 @@ public class DispatcherServlet extends HttpServlet {
 //		UrlMatcher.matchUrl()
 		List<String> attr = null;
 		Method m = null;
-		for(Map.Entry<String, Method> entry : methodsMap.entrySet()){
+		for(Map.Entry<String, Method> entry : urlMethodMap.entrySet()){
 			String mapUri = entry.getKey();
 			Method mapMethod = entry.getValue();
 			attr = UrlMatcher.matchUrl(uri,mapUri);
@@ -162,7 +179,7 @@ public class DispatcherServlet extends HttpServlet {
 					if(paramAnno != null){
 						System.out.println("用户自定义普通url参数"+paramAnno.value());
 						String value = request.getParameter(paramAnno.value());
-						args[i]=convert(value,p.getType());
+						args[i]=value;
 						System.out.println("request参数"+args[i]);
 					} else if(i == parameters.length-1){
 						System.out.println("用户需要获得所有的url参数，包括多参数状态的");
@@ -171,7 +188,7 @@ public class DispatcherServlet extends HttpServlet {
 				}
 			}
 
-			Object obj=beansMap.get(m);
+			Object obj= beanMethodMap.get(m);
 			try {
 				System.out.println("invoke method "+m.getName()+" in obj: "+obj+" in class: "+obj.getClass());
 				Object ret=m.invoke(obj, args);
@@ -199,11 +216,6 @@ public class DispatcherServlet extends HttpServlet {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	private Object convert(String value, Class<?> type) {
-		// TODO Auto-generated method stub
-		return value;
 	}
 
 	/**

@@ -21,7 +21,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 //            // 从request中获取文本输入流信息
 //            InputStream fileSourceStream = request.getInputStream();
 
-            String tempFilePath = "/home/jesson/Documents/code/IdeaProjects/MySpringMVC/src/main/files/tempFile";
+            String tempFilePath = "D:/files/Tempfile";
 
             // 设置临时文件，保存待上传的文本输入流
             File tempFile = new File(tempFilePath);
@@ -80,7 +80,7 @@ public class FileUploadServiceImpl implements FileUploadService {
             }
 
             // 设置保存上传文件的路径
-            String realPath = "/home/jesson/Documents/code/IdeaProjects/MySpringMVC/src/main/files";
+            String realPath = "D:/files";
             File fileupload = new File(realPath);
             if (!fileupload.exists()) {
                 fileupload.mkdir();

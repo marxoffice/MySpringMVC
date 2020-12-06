@@ -52,7 +52,7 @@ public class BeanHelper {
      * @param cls
      * @param beanMap
      */
-    private static void loadComponent(Class<?> cls, Map<Class<?>, Object> beanMap) {
+    public static void loadComponent(Class<?> cls, Map<Class<?>, Object> beanMap) {
         Object o = Reflection.newInstance(cls);
         Field[] fields = cls.getDeclaredFields();
         for (Field f : fields) {
@@ -62,4 +62,5 @@ public class BeanHelper {
         }
         beanMap.put(cls, o);
     }
+
 }

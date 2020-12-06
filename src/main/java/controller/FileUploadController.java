@@ -11,8 +11,9 @@ import java.io.InputStream;
 
 @Controller(value = "/fileUpload")
 public class FileUploadController {
-//    @Autowired
-//    FileUploadService uploadService;
+
+    @Autowired
+    FileUploadServiceImpl uploadService;
 
     /**
      * 文件上传，前端传递一个
@@ -21,8 +22,8 @@ public class FileUploadController {
      */
     @RequestMapping("/fileUpload")
     public View fileUpload(InputStream fileSourceStream){
-        FileUploadServiceImpl service = new FileUploadServiceImpl();
-        boolean status = service.uploadFile(fileSourceStream);
+//        FileUploadServiceImpl service = new FileUploadServiceImpl();
+        boolean status = uploadService.uploadFile(fileSourceStream);
         View view = new View("/WEB-INF/result.jsp");
         if (status) {
             view.addAttribute("status", "upload success");
