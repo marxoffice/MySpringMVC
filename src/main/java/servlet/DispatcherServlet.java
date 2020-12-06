@@ -106,6 +106,14 @@ public class DispatcherServlet extends HttpServlet {
 		ServletRegistration defaultServlet = servletContext.getServletRegistration("default");
 		defaultServlet.addMapping("/favicon.ico"); //网站头像
 		// defaultServlet.addMapping("/" + "*");
+
+		// 三个常用的网页元素
+		defaultServlet.addMapping("/static/images/*");
+		defaultServlet.addMapping("/static/js/*");
+		defaultServlet.addMapping("/static/css/*");
+
+		// 允许用户自己添加自己的文件或类型
+		defaultServlet.addMapping("/static/files/*");
 	}
 
 	/**

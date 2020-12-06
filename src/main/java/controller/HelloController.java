@@ -3,6 +3,7 @@ package controller;
 import annotation.Controller;
 import annotation.RequestMapping;
 import annotation.RequestParam;
+import view.View;
 
 import java.util.Map;
 
@@ -44,6 +45,11 @@ public class HelloController {
     public String paramTest(String user, String tag, @RequestParam("isVIP") String isVIP,Map<String, String[]> paramMaps){
         String responseText = "user: " + user + " tag: " + tag + " is VIP: " + isVIP + " ParameterCount: " + paramMaps.size();
         return responseText;
+    }
+
+    @RequestMapping(value="/testStatic")
+    public View testStatic(){
+        return new View("/WEB-INF/testStatic.jsp");
     }
 
 //    @RequestMapping(value="/welcome.do/{name}/{password}")
