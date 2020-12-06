@@ -1,7 +1,10 @@
 package service;
 
+import annotation.Service;
+
 import java.io.InputStream;
 
+@Service
 public interface FileUploadService {
-    void uploadFile(InputStream fileSourceStream);
+    boolean uploadFile(InputStream fileSourceStream);
 }

@@ -4,7 +4,7 @@
     <title>Title</title>
 </head>
 <body>
-<form action="/fileUpload" method="post" enctype="multipart/form-data">
+<form action="/fileUpload/fileUpload" method="post" enctype="multipart/form-data">
     用户名：<input type="text" name="username"> <br>
     文件： <input type="file" name="imgFile"> <br>
     <input type="submit" value="上传">

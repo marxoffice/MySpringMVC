@@ -22,6 +22,7 @@ import annotation.Controller;
 import annotation.RequestParam;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import utils.BeanHelper;
 import utils.ClassTool;
 import utils.UrlMatcher;
 import view.View;
@@ -46,6 +47,8 @@ public class DispatcherServlet extends HttpServlet {
 		Set<Class<?>> clzSet=ClassTool.getClasses("controller");
 		for(Class<?> c:clzSet) // 遍历所有的controller class
 		{
+//			BeanHelper.loadBeans(c, beansMap);
+//			BeanHelper.scanComponents(c, beansMap);
 			Controller rc=c.getAnnotation(Controller.class);
 			if(rc!=null)
 			{
@@ -208,7 +211,6 @@ public class DispatcherServlet extends HttpServlet {
 	 *      response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
 		doGet(request, response);
 	}
 

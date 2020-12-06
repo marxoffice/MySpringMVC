@@ -4,15 +4,15 @@ import service.FileUploadService;
 
 import java.io.*;
 
-public class FileUploadServiceImpl {
+public class FileUploadServiceImpl implements FileUploadService {
     public FileUploadServiceImpl(){
         System.out.println("in FileUploadService");
     }
     /**
      * 文件上传
      */
-//    @Override
-    public static boolean uploadFile(InputStream fileSourceStream) {
+    @Override
+    public boolean uploadFile(InputStream fileSourceStream) {
         try {
 //            request.setCharacterEncoding("utf-8");
 //            response.setCharacterEncoding("utf-8");
@@ -21,7 +21,7 @@ public class FileUploadServiceImpl {
 //            // 从request中获取文本输入流信息
 //            InputStream fileSourceStream = request.getInputStream();
 
-            String tempFilePath = "/src/main/files/tempFile";
+            String tempFilePath = "/home/jesson/Documents/code/IdeaProjects/MySpringMVC/src/main/files/tempFile";
 
             // 设置临时文件，保存待上传的文本输入流
             File tempFile = new File(tempFilePath);
@@ -46,6 +46,9 @@ public class FileUploadServiceImpl {
 
             // 获取上传文件的名称
             RandomAccessFile randomFile = new RandomAccessFile(tempFile, "r");
+            for (int i =0;i<4;i++) {
+                System.out.println(randomFile.readLine());
+            }
             randomFile.readLine();
             String str = randomFile.readLine();
             int start = str.lastIndexOf("=") + 2;
@@ -57,13 +60,13 @@ public class FileUploadServiceImpl {
             long startIndex = 0;
             int i = 1;
             // 获取文件内容的开始位置
-            while ((n = randomFile.readByte()) != -1 && i <= 4) {
+            while ((n = randomFile.readByte()) != -1 && i <= 8) {
                 if (n == '\n') {
                     startIndex = randomFile.getFilePointer();
                     i++;
                 }
             }
-            startIndex = startIndex - 1; // 这里一定要减1，因为前面多读了一个，这里很容易忽略
+//            startIndex = startIndex - 1; // 这里一定要减1，因为前面多读了一个，这里很容易忽略
             // 获取文件内容结束位置
             randomFile.seek(randomFile.length());
             long endIndex = randomFile.getFilePointer();
@@ -77,7 +80,7 @@ public class FileUploadServiceImpl {
             }
 
             // 设置保存上传文件的路径
-            String realPath = "/src/main/files";
+            String realPath = "/home/jesson/Documents/code/IdeaProjects/MySpringMVC/src/main/files";
             File fileupload = new File(realPath);
             if (!fileupload.exists()) {
                 fileupload.mkdir();
